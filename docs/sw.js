@@ -1,4 +1,4 @@
-const C="makro-vmu2ssief";
+const C="makro-vmu2ti3cx";
 const ON=["./","./index.html","./manifest.json","./icon-192.png","./icon-180.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(ON)).then(()=>self.skipWaiting()));});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});

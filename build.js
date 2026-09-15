@@ -1,6 +1,5 @@
 /* index.html (artifact kaynağı) -> makro-defteri.html (tek dosya) + docs/ (GitHub Pages PWA) */
 const fs=require("fs"),path=require("path");
-const ikon=require("./icons.js");
 
 const src=fs.readFileSync("index.html","utf8");
 const kes=src.indexOf('<div class="app">');
@@ -8,22 +7,21 @@ if(kes<0){console.error("gövde bulunamadı");process.exit(1);}
 const kafa=src.slice(0,kes).trim(), govde=src.slice(kes).trim();
 
 const ARKA="#F1F3ED", ARKA_KOYU="#121512";
+const oku=f=>fs.readFileSync(path.join("assets",f));
+const uri=(f,t)=>"data:"+t+";base64,"+oku(f).toString("base64");
 
-/* ikonlar */
+/* ikonlar assets/ içinde hazır duruyor; docs/ için kopyalanır */
 fs.mkdirSync("docs",{recursive:true});
-const png180=ikon.ciz(180,1);
-fs.writeFileSync(path.join("docs","icon-180.png"),png180);
-fs.writeFileSync(path.join("docs","icon-192.png"),ikon.ciz(192,1));
-fs.writeFileSync(path.join("docs","icon-512.png"),ikon.ciz(512,1));
-fs.writeFileSync(path.join("docs","icon-512m.png"),ikon.ciz(512,0.76));
-fs.writeFileSync(path.join("docs","icon.svg"),ikon.svg(1));
-const svgUri="data:image/svg+xml,"+encodeURIComponent(ikon.svg(1));
-const pngUri="data:image/png;base64,"+png180.toString("base64");
+const IKONLAR=["icon-180.png","icon-192.png","icon-512.jpg","icon-512m.jpg"];
+IKONLAR.forEach(f=>fs.writeFileSync(path.join("docs",f),oku(f)));
 
 function belge(o){
   const ikonlar=o.dosyali
-    ? '<link rel="icon" href="icon.svg">\n<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">\n<link rel="apple-touch-icon" href="icon-180.png">\n<link rel="manifest" href="manifest.json">\n'
-    : '<link rel="icon" href="'+svgUri+'">\n<link rel="apple-touch-icon" href="'+pngUri+'">\n';
+    ? '<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">\n'+
+      '<link rel="apple-touch-icon" href="icon-180.png">\n'+
+      '<link rel="manifest" href="manifest.json">\n'
+    : '<link rel="icon" href="'+uri("icon-192.png","image/png")+'">\n'+
+      '<link rel="apple-touch-icon" href="'+uri("icon-180.jpg","image/jpeg")+'">\n';
   const sw=o.sw?'\n<script>if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});<\/script>':"";
   return '<!doctype html>\n<html lang="tr">\n<head>\n'+
   '<meta charset="utf-8">\n'+
@@ -53,8 +51,8 @@ fs.writeFileSync(path.join("docs","manifest.json"),JSON.stringify({
   background_color:ARKA,theme_color:ARKA,
   icons:[
     {src:"icon-192.png",sizes:"192x192",type:"image/png",purpose:"any"},
-    {src:"icon-512.png",sizes:"512x512",type:"image/png",purpose:"any"},
-    {src:"icon-512m.png",sizes:"512x512",type:"image/png",purpose:"maskable"}
+    {src:"icon-512.jpg",sizes:"512x512",type:"image/jpeg",purpose:"any"},
+    {src:"icon-512m.jpg",sizes:"512x512",type:"image/jpeg",purpose:"maskable"}
   ]
 },null,2)+"\n");
 
