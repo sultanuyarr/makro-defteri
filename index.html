@@ -1082,10 +1082,17 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheet.acik)sheetKap
     const c=document.createElement("canvas");c.width=c.height=180;
     const x=c.getContext("2d");
     x.fillStyle="#F1F3ED";x.fillRect(0,0,180,180);
-    x.strokeStyle="#C8452B";x.lineWidth=13;x.lineCap="round";
-    x.beginPath();x.arc(90,90,58,-Math.PI/2,Math.PI*0.95);x.stroke();
-    x.fillStyle="#151A17";x.font="700 62px 'Bricolage Grotesque',sans-serif";
-    x.textAlign="center";x.textBaseline="middle";x.fillText("M",90,94);
+    const R=180*0.315, W=180*0.134, CEV=2*Math.PI*R, BOS=W*0.40;
+    const KULL=CEV-3*BOS-3*W;
+    x.lineWidth=W;x.lineCap="round";
+    let imlec=W/2;
+    [["#33648C",0.32],["#D2952A",0.28],["#5D8F44",0.40]].forEach(function(d){
+      const boy=KULL*d[1];
+      x.strokeStyle=d[0];x.beginPath();
+      x.arc(90,90,R,imlec/CEV*2*Math.PI-Math.PI/2,(imlec+boy)/CEV*2*Math.PI-Math.PI/2);
+      x.stroke();
+      imlec+=boy+W+BOS;
+    });
     if(document.querySelector('link[rel="apple-touch-icon"]'))return;
     const l=document.createElement("link");
     l.rel="apple-touch-icon";l.href=c.toDataURL("image/png");h.appendChild(l);
