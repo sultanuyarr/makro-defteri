@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Boy ve kilona göre günlük kalori ve makro hedefini hesaplayan, yediklerini yazdıkça kalan protein, yağ ve karbonhidratı gösteren diyet defteri.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Makro">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F1F3ED" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121512" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root{color-scheme:light dark}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:14px/1.5 "IBM Plex Sans",system-ui,-apple-system,sans-serif;background:#F1F3ED}
+@media (prefers-color-scheme:dark){body{background:#121512}}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Makro Defteri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F1F3ED; --surface:#FFFFFF; --surface-2:#F8F9F4; --sunken:#EBEEE5;
+  --ink:#151A17; --ink-2:#48524C; --muted:#78837B;
+  --line:#DFE3D8; --line-2:#C9CFC0;
+  --acc:#C8452B; --acc-soft:#F6E2DC;
+  --pro:#2F5D82; --pro-soft:#DEE8F0;
+  --fat:#B37D18; --fat-soft:#F4E9D2;
+  --carb:#527D3C; --carb-soft:#E1EBD9;
+  --ok:#3F7D4E; --over:#B03A22;
+  --shadow:0 1px 2px rgba(21,26,23,.06), 0 8px 24px -12px rgba(21,26,23,.18);
+  --r:14px;
+  --ff-d:"Bricolage Grotesque","Helvetica Neue",sans-serif;
+  --ff-b:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --ff-m:"IBM Plex Mono","SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121512; --surface:#1A1E1A; --surface-2:#212621; --sunken:#0D100D;
+    --ink:#EBEFE8; --ink-2:#AFB8B0; --muted:#828C84;
+    --line:#2B312B; --line-2:#3B433C;
+    --acc:#E8654A; --acc-soft:#38211C;
+    --pro:#79A8D0; --pro-soft:#1B2833;
+    --fat:#DFAD4E; --fat-soft:#332A17;
+    --carb:#8CBC6C; --carb-soft:#1E2A19;
+    --ok:#6FB07C; --over:#E8654A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121512; --surface:#1A1E1A; --surface-2:#212621; --sunken:#0D100D;
+  --ink:#EBEFE8; --ink-2:#AFB8B0; --muted:#828C84;
+  --line:#2B312B; --line-2:#3B433C;
+  --acc:#E8654A; --acc-soft:#38211C;
+  --pro:#79A8D0; --pro-soft:#1B2833;
+  --fat:#DFAD4E; --fat-soft:#332A17;
+  --carb:#8CBC6C; --carb-soft:#1E2A19;
+  --ok:#6FB07C; --over:#E8654A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--ff-b);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;padding:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+
+.app{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg)}
+.scroll{flex:1;padding:0 16px 104px;padding-block-end:calc(104px + env(safe-area-inset-bottom,0px))}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 16px 8px;border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:8px}
+.brand{font-family:var(--ff-d);font-weight:800;font-size:15px;letter-spacing:-.02em;margin-right:auto}
+.brand span{color:var(--acc)}
+.daynav{display:flex;align-items:center;gap:2px}
+.daynav button{width:32px;height:32px;display:grid;place-items:center;border-radius:8px;color:var(--ink-2)}
+.daynav button:hover{background:var(--sunken)}
+.daynav button[disabled]{opacity:.28;cursor:default}
+.daynav .lbl{font-size:13px;font-weight:600;min-width:104px;text-align:center;line-height:1.15}
+.daynav .lbl em{display:block;font-style:normal;font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+/* ---------- ring block ---------- */
+.hero{display:grid;grid-template-columns:132px 1fr;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px;box-shadow:var(--shadow)}
+.ringwrap{position:relative;width:132px;height:132px}
+.ringwrap svg{width:100%;height:100%;display:block}
+.ring-track{fill:none;stroke:var(--sunken);stroke-width:11}
+.ring-fill{fill:none;stroke:var(--acc);stroke-width:11;stroke-linecap:round;transition:stroke-dashoffset .5s cubic-bezier(.4,0,.2,1)}
+.ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.ring-c b{font-family:var(--ff-d);font-size:34px;font-weight:800;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.ring-c small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px;font-weight:600}
+.ring-c .over{color:var(--over)}
+
+.macros{display:flex;flex-direction:column;gap:12px}
+.macro{display:grid;grid-template-columns:1fr auto;gap:3px 8px}
+.macro .name{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.macro .num{font-family:var(--ff-m);font-size:11.5px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.macro .num b{color:var(--ink);font-weight:600}
+.bar{grid-column:1/-1;height:7px;border-radius:99px;background:var(--sunken);overflow:hidden;position:relative}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.m-pro .bar i{background:var(--pro)} .m-fat .bar i{background:var(--fat)} .m-carb .bar i{background:var(--carb)}
+.bar.full i{background:repeating-linear-gradient(135deg,var(--over) 0 5px,color-mix(in srgb,var(--over) 62%,transparent) 5px 10px)}
+
+.tdee-note{margin-top:10px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.5}
+.tdee-note b{color:var(--ink-2);font-weight:600}
+
+/* ---------- water ---------- */
+.water{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 14px}
+.water .wl{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.water .glasses{display:flex;gap:4px;margin-left:auto}
+.water .glasses button{width:15px;height:20px;border-radius:3px 3px 6px 6px;border:1.5px solid var(--line-2);background:transparent}
+.water .glasses button.on{background:var(--pro);border-color:var(--pro)}
+.water .cnt{font-family:var(--ff-m);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:52px}
+
+/* ---------- meals ---------- */
+.meal{margin-top:16px}
+.meal-h{display:flex;align-items:baseline;gap:8px;padding:0 3px 7px}
+.meal-h h3{margin:0;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink)}
+.meal-h .rng{font-size:10.5px;color:var(--muted);font-family:var(--ff-m);letter-spacing:.02em}
+.meal-h .tot{margin-left:auto;font-family:var(--ff-m);font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.items{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.item{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:11px 12px 11px 14px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.item .t{min-width:0}
+.item .t b{display:block;font-size:14px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.item .t span{display:block;font-size:11.5px;color:var(--muted);font-family:var(--ff-m);margin-top:2px}
+.item .kc{font-family:var(--ff-d);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.item .kc em{font-style:normal;font-size:10px;font-weight:600;color:var(--muted);margin-left:2px}
+.item .del{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--muted)}
+.item .del:hover{background:var(--acc-soft);color:var(--acc)}
+.empty{background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r);padding:14px;text-align:center;font-size:12.5px;color:var(--muted)}
+
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{border:1px solid var(--line-2);border-radius:99px;padding:6px 11px;font-size:12.5px;font-weight:500;background:var(--surface);color:var(--ink-2)}
+.chip:hover{border-color:var(--acc);color:var(--acc)}
+.chip.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* ---------- bottom nav + fab ---------- */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;max-width:480px;margin:0 auto;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav button{flex:1;padding:9px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.nav button.on{color:var(--acc)}
+.nav svg{width:20px;height:20px}
+.fab{position:fixed;z-index:31;right:max(16px,calc(50vw - 240px + 16px));bottom:calc(74px + env(safe-area-inset-bottom,0px));height:50px;padding:0 20px;border-radius:99px;background:var(--acc);color:#fff;font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:7px;box-shadow:0 6px 20px -6px color-mix(in srgb,var(--acc) 70%,transparent)}
+.fab svg{width:17px;height:17px}
+
+/* ---------- sheet ---------- */
+.veil{position:fixed;inset:0;z-index:40;background:rgba(10,14,11,.5);opacity:0;pointer-events:none;transition:opacity .22s}
+.veil.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;z-index:41;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--line);border-bottom:none;max-height:92dvh;display:flex;flex-direction:column;transform:translateY(102%);transition:transform .26s cubic-bezier(.32,.72,0,1)}
+.sheet.on{transform:translateY(0)}
+.sheet-h{padding:12px 16px 0;flex-shrink:0}
+.grab{width:34px;height:4px;border-radius:99px;background:var(--line-2);margin:0 auto 12px}
+.sheet-t{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sheet-t h2{margin:0;font-family:var(--ff-d);font-size:19px;font-weight:700;letter-spacing:-.02em}
+.sheet-t .x{margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--muted);background:var(--sunken)}
+.tabs{display:flex;gap:4px;background:var(--sunken);padding:3px;border-radius:10px;margin-bottom:12px}
+.tabs button{flex:1;padding:7px 4px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.09)}
+.sheet-b{overflow-y:auto;padding:0 16px 20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+
+.fld{display:block;margin-bottom:12px}
+.fld>span{display:block;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.inp{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:15px}
+.inp:focus{border-color:var(--acc);outline:none}
+textarea.inp{resize:vertical;min-height:84px;line-height:1.5}
+.btn{width:100%;background:var(--acc);color:#fff;border-radius:11px;padding:13px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.ghost{background:var(--sunken);color:var(--ink)}
+.res{border-top:1px solid var(--line)}
+.res button{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 2px;border-bottom:1px solid var(--line)}
+.res button:hover{background:var(--surface-2)}
+.res .t b{display:block;font-size:14.5px;font-weight:600}
+.res .t span{display:block;font-size:11.5px;color:var(--muted);font-family:var(--ff-m);margin-top:2px}
+.res .k{font-family:var(--ff-d);font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.nores{padding:18px 2px;font-size:13px;color:var(--muted);text-align:center;line-height:1.6}
+
+.prev{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.prev .pn{font-size:15.5px;font-weight:700;margin-bottom:9px;line-height:1.3}
+.prev .pg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.prev .pg div{background:var(--surface);border-radius:8px;padding:7px 2px}
+.prev .pg b{display:block;font-family:var(--ff-d);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.prev .pg span{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:1px}
+.prev .pg .c-k b{color:var(--acc)} .prev .pg .c-p b{color:var(--pro)} .prev .pg .c-f b{color:var(--fat)} .prev .pg .c-c b{color:var(--carb)}
+.pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.pick button{padding:9px 2px;border:1px solid var(--line-2);border-radius:9px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--surface)}
+.pick button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rowg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rowg4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 12px}
+.err{background:var(--acc-soft);color:var(--over);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin-bottom:12px}
+.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.aitem{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line)}
+.aitem input[type=checkbox]{width:19px;height:19px;accent-color:var(--acc)}
+.aitem .t b{display:block;font-size:14px;font-weight:600;line-height:1.3}
+.aitem .t span{display:block;font-size:11px;color:var(--muted);font-family:var(--ff-m);margin-top:2px}
+.aitem .k{font-family:var(--ff-d);font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ---------- pages ---------- */
+.ph{font-family:var(--ff-d);font-size:24px;font-weight:800;letter-spacing:-.03em;margin:18px 0 3px}
+.psub{font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.55}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.card h4{margin:0 0 11px;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2)}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;text-align:center}
+.tgrid div{background:var(--surface-2);border-radius:10px;padding:10px 2px}
+.tgrid b{display:block;font-family:var(--ff-d);font-size:19px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tgrid span{display:block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:2px}
+.tgrid .c-k b{color:var(--acc)} .tgrid .c-p b{color:var(--pro)} .tgrid .c-f b{color:var(--fat)} .tgrid .c-c b{color:var(--carb)}
+.kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.kv:last-child{border-bottom:none}
+.kv span{color:var(--muted)}
+.kv b{font-family:var(--ff-m);font-weight:600;font-variant-numeric:tabular-nums}
+.hrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.hrow:last-child{border-bottom:none}
+.hrow .d{font-family:var(--ff-m);font-size:11.5px;color:var(--muted);min-width:48px}
+.hbar{height:8px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.hbar i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.hbar i.under{background:var(--ok)}
+.hrow .v{font-family:var(--ff-m);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;min-width:74px;text-align:right}
+.hrow .v em{font-style:normal;color:var(--muted);font-weight:500}
+.wchart{margin-top:4px}
+.wchart svg{width:100%;height:110px;display:block;overflow:visible}
+.wg{stroke:var(--line);stroke-width:1}
+.wline{fill:none;stroke:var(--carb);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.warea{fill:var(--carb-soft)}
+.wdot{fill:var(--carb)}
+.wlab{font-family:var(--ff-m);font-size:9px;fill:var(--muted)}
+.flexrow{display:flex;gap:8px}
+.flexrow .inp{flex:1}
+.flexrow .btn{width:auto;padding:0 18px;flex-shrink:0}
+.seg{display:grid;gap:6px}
+.seg button{text-align:left;padding:11px 13px;border:1px solid var(--line-2);border-radius:11px;background:var(--surface)}
+.seg button.on{border-color:var(--acc);background:var(--acc-soft)}
+.seg button b{display:block;font-size:14px;font-weight:600}
+.seg button span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.seg button.on span{color:var(--ink-2)}
+.warnbox{background:var(--fat-soft);border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.55;color:var(--ink-2);margin-top:10px}
+.foot{text-align:center;font-size:11px;color:var(--muted);line-height:1.6;padding:20px 8px 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top" id="top"></div>
+  <div class="scroll" id="main"></div>
+</div>
+<nav class="nav" id="nav"></nav>
+<button class="fab" id="fab" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Ekle</button>
+<div class="veil" id="veil"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Yemek ekle">
+  <div class="sheet-h" id="sheetH"></div>
+  <div class="sheet-b" id="sheetB"></div>
+</div>
+
+<script>
+"use strict";
+/* ======================= yemek veritabanı =======================
+   [ad, kcal/100g, protein/100g, yağ/100g, karb/100g, porsiyon(g), porsiyon adı] */
+const FOODS=[
+["Yumurta (haşlanmış)",155,13,11,1.1,50,"1 adet"],
+["Yumurta (sahanda)",220,12,18,0.6,55,"1 adet"],
+["Beyaz peynir (tam yağlı)",280,17.5,23,1.5,30,"1 dilim"],
+["Beyaz peynir (light)",185,19,11,2,30,"1 dilim"],
+["Kaşar peyniri",375,25,29,2,30,"1 dilim"],
+["Tulum peyniri",340,22,27,1.5,30,"1 porsiyon"],
+["Lor peyniri",98,11,4,3.5,50,"2 yemek kaşığı"],
+["Süt (tam yağlı)",64,3.2,3.5,4.8,200,"1 su bardağı"],
+["Süt (yarım yağlı)",47,3.4,1.6,4.8,200,"1 su bardağı"],
+["Yoğurt (tam yağlı)",68,3.6,4,4.5,200,"1 kase"],
+["Yoğurt (yağsız)",40,4.2,0.2,5.5,200,"1 kase"],
+["Süzme yoğurt",110,8.5,7,4,150,"1 kase"],
+["Ayran",38,1.6,1.8,3.2,250,"1 bardak"],
+["Kefir",43,3.3,1.5,4.5,200,"1 bardak"],
+["Tereyağı",717,0.9,81,0.1,10,"1 tatlı kaşığı"],
+["Zeytinyağı",884,0,100,0,13,"1 yemek kaşığı"],
+["Zeytin (siyah)",160,1.2,15,4.5,20,"5 adet"],
+["Zeytin (yeşil)",145,1,15,3.8,20,"5 adet"],
+["Bal",304,0.3,0,82,21,"1 yemek kaşığı"],
+["Reçel",250,0.4,0.1,62,20,"1 yemek kaşığı"],
+["Tahin",595,17,53,21,18,"1 yemek kaşığı"],
+["Pekmez",293,0.5,0,71,21,"1 yemek kaşığı"],
+["Kakaolu fındık kreması",539,6,31,58,15,"1 tatlı kaşığı"],
+["Beyaz ekmek",265,9,3.2,49,30,"1 dilim"],
+["Tam buğday ekmeği",247,13,3.4,41,30,"1 dilim"],
+["Çavdar ekmeği",259,9,3.3,48,30,"1 dilim"],
+["Simit",330,10,5,60,100,"1 adet"],
+["Poğaça",355,7.5,18,41,70,"1 adet"],
+["Açma",330,8,12,47,80,"1 adet"],
+["Lavaş",275,9,1.5,55,40,"1 adet"],
+["Yufka",300,9,1.2,62,40,"1 yaprak"],
+["Pide ekmeği",275,9,1.5,55,50,"1 dilim"],
+["Bazlama",280,8,3,55,60,"1 dilim"],
+["Yulaf ezmesi (kuru)",389,17,7,66,40,"1/2 su bardağı"],
+["Mısır gevreği",379,7,0.9,84,30,"1 kase"],
+["Granola",471,10,20,64,40,"1 avuç"],
+["Pirinç pilavı",165,3,4.5,28,150,"1 porsiyon"],
+["Bulgur pilavı",145,4,3.5,25,150,"1 porsiyon"],
+["Makarna (sade)",158,5.8,0.9,31,180,"1 porsiyon"],
+["Kuskus",112,3.8,0.2,23,150,"1 porsiyon"],
+["Erişte",165,6,2,30,150,"1 porsiyon"],
+["Mantı (yoğurtlu)",195,8,8,23,250,"1 porsiyon"],
+["Tavuk göğsü (ızgara)",165,31,3.6,0,150,"1 porsiyon"],
+["Tavuk but (derisiz)",209,26,11,0,150,"1 porsiyon"],
+["Tavuk (kızarmış, derili)",260,26,16,5,150,"1 porsiyon"],
+["Hindi göğsü",135,29,1,0,150,"1 porsiyon"],
+["Dana kıyma (pişmiş)",250,26,16,0,100,"1 porsiyon"],
+["Dana bonfile (ızgara)",205,30,9,0,150,"1 porsiyon"],
+["Kuzu pirzola (ızgara)",294,25,21,0,120,"3 adet"],
+["Köfte (ızgara)",250,18,18,4,150,"4-5 adet"],
+["Sucuk",420,25,35,2,30,"3 dilim"],
+["Salam",310,15,27,2,30,"3 dilim"],
+["Pastırma",250,34,12,2,30,"3 dilim"],
+["Sosis",290,12,26,3,50,"2 adet"],
+["Somon (fırın)",208,22,13,0,150,"1 porsiyon"],
+["Levrek (ızgara)",120,20,4.5,0,150,"1 porsiyon"],
+["Çipura (ızgara)",140,20,6.5,0,150,"1 porsiyon"],
+["Hamsi (tava)",250,19,17,6,150,"1 porsiyon"],
+["Ton balığı (suda)",116,26,1,0,80,"1 konserve"],
+["Karides (haşlanmış)",110,24,1,0,100,"1 porsiyon"],
+["Mercimek çorbası",72,3.5,2.2,10,250,"1 kase"],
+["Ezogelin çorbası",78,3.5,2.2,11.5,250,"1 kase"],
+["Tarhana çorbası",60,2.5,1.8,8.5,250,"1 kase"],
+["Yayla çorbası",65,2.6,2.8,7.5,250,"1 kase"],
+["Domates çorbası",58,1.6,2.5,7,250,"1 kase"],
+["İşkembe çorbası",85,6,5,3,250,"1 kase"],
+["Kuru fasulye",125,6.5,4.5,15,200,"1 porsiyon"],
+["Nohut yemeği",135,6.5,5,16,200,"1 porsiyon"],
+["Barbunya yemeği",120,6,4,15,200,"1 porsiyon"],
+["Yeşil mercimek yemeği",115,6.5,3,15,200,"1 porsiyon"],
+["Etli nohut",155,9,7,15,200,"1 porsiyon"],
+["Zeytinyağlı taze fasulye",75,2,5,6,200,"1 porsiyon"],
+["Türlü",80,2.5,4,9,200,"1 porsiyon"],
+["İmambayıldı",125,1.5,9,10,200,"1 porsiyon"],
+["Karnıyarık",160,7,11,9,200,"1 porsiyon"],
+["Musakka",145,7,9,9,200,"1 porsiyon"],
+["Zeytinyağlı yaprak sarma",170,3,8,22,100,"4 adet"],
+["Etli biber dolması",140,6,7,13,200,"2 adet"],
+["Menemen",125,6,9,4.5,200,"1 porsiyon"],
+["Sebzeli omlet",155,11,11,3,150,"1 porsiyon"],
+["Çiğ köfte (etsiz)",190,5,3,37,70,"5 adet"],
+["Ispanak yemeği",75,3.5,4,5.5,200,"1 porsiyon"],
+["Pırasa yemeği",70,2,4,7,200,"1 porsiyon"],
+["Domates",18,0.9,0.2,3.9,120,"1 adet"],
+["Salatalık",15,0.7,0.1,3.6,120,"1 adet"],
+["Marul",15,1.4,0.2,2.9,50,"birkaç yaprak"],
+["Havuç",41,0.9,0.2,9.6,80,"1 adet"],
+["Brokoli (haşlanmış)",35,2.4,0.4,7,150,"1 porsiyon"],
+["Patates (haşlanmış)",87,1.9,0.1,20,150,"1 orta boy"],
+["Patates kızartması",312,3.4,15,41,120,"1 porsiyon"],
+["Kabak",17,1.2,0.3,3.1,150,"1 adet"],
+["Avokado",160,2,15,8.5,100,"yarım adet"],
+["Çoban salata",55,1.1,3.8,4.5,200,"1 porsiyon"],
+["Elma",52,0.3,0.2,14,150,"1 orta boy"],
+["Muz",89,1.1,0.3,23,110,"1 adet"],
+["Portakal",47,0.9,0.1,12,140,"1 adet"],
+["Mandalina",53,0.8,0.3,13,90,"1 adet"],
+["Çilek",32,0.7,0.3,7.7,150,"1 kase"],
+["Karpuz",30,0.6,0.2,7.6,300,"1 dilim"],
+["Kavun",34,0.8,0.2,8,200,"1 dilim"],
+["Üzüm",69,0.7,0.2,18,100,"1 salkım"],
+["Armut",57,0.4,0.1,15,170,"1 adet"],
+["Şeftali",39,0.9,0.3,10,150,"1 adet"],
+["Kiraz",63,1,0.2,16,100,"1 avuç"],
+["İncir (taze)",74,0.8,0.3,19,100,"2 adet"],
+["Kuru kayısı",241,3.4,0.5,63,30,"5 adet"],
+["Kuru üzüm",299,3.1,0.5,79,30,"1 avuç"],
+["Hurma",282,2.5,0.4,75,24,"3 adet"],
+["Ceviz",654,15,65,14,15,"3 tam"],
+["Badem",579,21,50,22,18,"15 adet"],
+["Fındık",628,15,61,17,15,"15 adet"],
+["Antep fıstığı",560,20,45,28,20,"1 avuç"],
+["Kaju",553,18,44,30,20,"1 avuç"],
+["Ayçekirdeği (iç)",584,21,51,20,20,"1 avuç"],
+["Fıstık ezmesi",588,25,50,20,18,"1 yemek kaşığı"],
+["Döner (et)",250,20,18,2,150,"1 porsiyon"],
+["Tavuk döner",190,22,10,2,150,"1 porsiyon"],
+["Tavuk döner dürüm",215,13,8,24,250,"1 adet"],
+["Et dürüm",245,14,12,21,250,"1 adet"],
+["İskender",230,14,14,13,400,"1 porsiyon"],
+["Lahmacun",265,11,8,37,130,"1 adet"],
+["Karışık pizza",266,11,10,33,200,"2 dilim"],
+["Hamburger",254,13,10,30,160,"1 adet"],
+["Adana kebap",280,17,23,2,150,"1 porsiyon"],
+["Urfa kebap",260,18,20,2,150,"1 porsiyon"],
+["Tavuk şiş",175,27,6,2,150,"1 porsiyon"],
+["Kıymalı pide",265,12,10,32,250,"1 adet"],
+["Kumpir",230,5,10,30,350,"1 adet"],
+["Kaşarlı tost",300,13,15,28,120,"1 adet"],
+["Peynirli börek",285,8.5,16,27,120,"1 dilim"],
+["Su böreği",235,8,10.5,26,150,"1 dilim"],
+["Kısır",185,4,6,29,100,"1 porsiyon"],
+["Midye dolma",150,4,4.5,23,125,"5 adet"],
+["Balık ekmek",220,12,8,25,250,"1 adet"],
+["Baklava",430,6,25,47,60,"1 dilim"],
+["Sütlaç",135,3.2,3,24,150,"1 kase"],
+["Künefe",350,8,18,40,150,"1 porsiyon"],
+["Revani",320,4,10,55,80,"1 dilim"],
+["Kazandibi",145,4,4,23,150,"1 porsiyon"],
+["Tulumba",400,4,18,56,60,"3 adet"],
+["Lokum",340,0.2,0.2,84,15,"1 adet"],
+["Dondurma",207,3.5,11,24,100,"2 top"],
+["Sütlü çikolata",535,7.6,30,59,25,"1 kalıp"],
+["Bitter çikolata",598,7.8,43,46,25,"1 kalıp"],
+["Petibör bisküvi",440,7,12,75,25,"5 adet"],
+["Kek",380,5,17,52,60,"1 dilim"],
+["Cips",536,6.6,35,53,30,"1 küçük paket"],
+["Protein bar",355,30,11,34,60,"1 adet"],
+["Whey protein tozu",385,78,5.5,8,30,"1 ölçek"],
+["Çay (şekersiz)",1,0,0,0.2,200,"1 bardak"],
+["Türk kahvesi (sade)",5,0.2,0,0.8,70,"1 fincan"],
+["Sütlü kahve / latte",55,3,2,6,250,"1 bardak"],
+["Kola",42,0,0,10.6,330,"1 kutu"],
+["Light kola",0.3,0,0,0,330,"1 kutu"],
+["Meyve suyu",45,0.5,0.1,11,200,"1 bardak"],
+["Limonata",60,0.1,0,15,250,"1 bardak"],
+["Bira",43,0.5,0,3.6,330,"1 şişe"],
+["Kırmızı şarap",85,0.1,0,2.6,150,"1 kadeh"],
+["Rakı",245,0,0,0,100,"1 duble"],
+["Toz şeker",400,0,0,100,3,"1 küp"],
+["Su",0,0,0,0,500,"1 şişe"]
+];
+
+const AKTIVITE=[
+ {k:"Hareketsiz",m:1.2,a:"Masa başı, spor yok"},
+ {k:"Az hareketli",m:1.375,a:"Haftada 1-3 gün hafif egzersiz"},
+ {k:"Orta hareketli",m:1.55,a:"Haftada 3-5 gün egzersiz"},
+ {k:"Çok hareketli",m:1.725,a:"Haftada 6-7 gün egzersiz"},
+ {k:"Aşırı hareketli",m:1.9,a:"Ağır iş veya günde iki antrenman"}
+];
+const HIZ=[
+ {v:0,k:"Kilomu koru",a:"Günlük ihtiyacın kadar"},
+ {v:0.25,k:"Yavaş ver",a:"Haftada ~0,25 kg · en sürdürülebilir"},
+ {v:0.5,k:"Dengeli ver",a:"Haftada ~0,5 kg · çoğu kişi için ideal"},
+ {v:0.75,k:"Hızlı ver",a:"Haftada ~0,75 kg · zorlayıcı olabilir"}
+];
+const OGUNLER=[
+ {id:"kahvalti",ad:"Kahvaltı",rng:"06–11"},
+ {id:"ogle",ad:"Öğle",rng:"11–16"},
+ {id:"aksam",ad:"Akşam",rng:"16–21"},
+ {id:"ara",ad:"Ara öğün",rng:"gün boyu"}
+];
+const GUNLER=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+
+/* ======================= yardımcılar ======================= */
+const $=s=>document.querySelector(s);
+const r0=n=>Math.round(n);
+const r1=n=>Math.round(n*10)/10;
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function norm(s){return String(s).toLocaleLowerCase("tr").replace(/ı/g,"i").replace(/İ/g,"i").replace(/ş/g,"s").replace(/ğ/g,"g").replace(/ü/g,"u").replace(/ö/g,"o").replace(/ç/g,"c").replace(/â/g,"a").replace(/î/g,"i");}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function bugun(){return iso(new Date());}
+function parseIso(s){const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c);}
+function kaydir(s,n){const d=parseIso(s);d.setDate(d.getDate()+n);return iso(d);}
+function gunEtiket(s){
+  const d=parseIso(s),t=bugun();
+  if(s===t)return{b:"Bugün",e:d.getDate()+" "+AYLAR[d.getMonth()]};
+  if(s===kaydir(t,-1))return{b:"Dün",e:d.getDate()+" "+AYLAR[d.getMonth()]};
+  if(s===kaydir(t,1))return{b:"Yarın",e:d.getDate()+" "+AYLAR[d.getMonth()]};
+  return{b:d.getDate()+" "+AYLAR[d.getMonth()],e:GUNLER[d.getDay()]};
+}
+function varsayilanOgun(){const h=new Date().getHours();return h<11?"kahvalti":h<16?"ogle":h<21?"aksam":"ara";}
+const LS={
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+
+/* ======================= hedef hesabı ======================= */
+function hedefler(p){
+  const bmr=p.cinsiyet==="erkek"
+    ? 10*p.kilo+6.25*p.boy-5*p.yas+5
+    : 10*p.kilo+6.25*p.boy-5*p.yas-161;
+  const tdee=bmr*AKTIVITE[p.aktivite].m;
+  const acik=p.hiz*1100;
+  const taban=p.cinsiyet==="erkek"?1500:1200;
+  let kcal=r0(tdee-acik);
+  const kisitlandi=kcal<taban;
+  if(kisitlandi)kcal=taban;
+  // Protein ihtiyacı toplam kiloyla değil yağsız kütleyle orantılıdır:
+  // fazla kilolarda fazlalığın yalnızca %40'ı sayılır.
+  const bm=p.boy/100, ustSinir=25*bm*bm;
+  const refKg=p.kilo>ustSinir?ustSinir+0.4*(p.kilo-ustSinir):p.kilo;
+  const protein=Math.min(r0(refKg*(p.hiz>0?1.9:1.6)),r0(kcal*0.4/4));
+  const kalanK=kcal-protein*4;
+  let yag=Math.max(r0(kcal*0.27/9),r0(refKg*0.7));
+  const yagTavan=r0((kalanK-120)/9);
+  if(yagTavan>0&&yag>yagTavan)yag=yagTavan;
+  const karb=Math.max(30,r0((kalanK-yag*9)/4));
+  return{bmr:r0(bmr),tdee:r0(tdee),acik:r0(acik),kcal,protein,yag,karb,kisitlandi,taban};
+}
+
+
+/* ======================= durum + depolama ======================= */
+const state={profil:null,tarih:bugun(),gun:null,sayfa:"bugun",hazir:false};
+let DB=null,SAMPLE=null,SAMPLE_IMG=false;
+
+function bosGun(t){return{tarih:t,ogeler:[],su:0,updatedAt:0};}
+function gunYukle(t){const g=LS.get("md.gun."+t,null);return g&&Array.isArray(g.ogeler)?g:bosGun(t);}
+function gunKaydet(g){
+  g.updatedAt=Date.now();
+  LS.set("md.gun."+g.tarih,g);
+  if(DB){DB.doc("gunler/"+g.tarih).set(JSON.parse(JSON.stringify(g))).catch(()=>{});}
+}
+function profilKaydet(p){
+  p.updatedAt=Date.now();
+  state.profil=p;LS.set("md.profil",p);
+  if(DB){DB.doc("profil/ana").set(JSON.parse(JSON.stringify(p))).catch(()=>{});}
+}
+
+async function baglan(){
+  if(!(window.claude&&typeof window.claude.use==="function"))return;
+  try{DB=await window.claude.use("db");}catch(e){DB=null;}
+  try{SAMPLE=await window.claude.use("sample");}catch(e){SAMPLE=null;}
+  if(SAMPLE){try{const l=await SAMPLE.limits();SAMPLE_IMG=!!(l&&l.images);}catch(e){SAMPLE_IMG=false;}}
+  if(DB){
+    try{
+      const ps=await DB.doc("profil/ana").get();
+      const uzak=ps.exists?ps.data():null, yerel=state.profil;
+      if(uzak&&uzak.kilo&&(!yerel||(uzak.updatedAt||0)>(yerel.updatedAt||0))){
+        state.profil=JSON.parse(JSON.stringify(uzak));LS.set("md.profil",state.profil);
+      }else if(yerel){DB.doc("profil/ana").set(JSON.parse(JSON.stringify(yerel))).catch(()=>{});}
+    }catch(e){}
+    try{
+      const qs=await DB.collection("gunler").get();
+      qs.docs.forEach(d=>{
+        const v=d.data();if(!v||!v.tarih)return;
+        const y=LS.get("md.gun."+v.tarih,null);
+        if(!y||(v.updatedAt||0)>(y.updatedAt||0))LS.set("md.gun."+v.tarih,JSON.parse(JSON.stringify(v)));
+      });
+    }catch(e){}
+    state.gun=gunYukle(state.tarih);
+  }
+  ciz();
+}
+
+/* ======================= toplamlar ======================= */
+function toplam(ogeler){
+  return ogeler.reduce((a,o)=>({kcal:a.kcal+o.kcal,p:a.p+o.p,f:a.f+o.f,c:a.c+o.c}),{kcal:0,p:0,f:0,c:0});
+}
+
+/* ======================= çizim ======================= */
+function ciz(){
+  if(!state.profil){cizKurulum();return;}
+  $("#nav").hidden=false;
+  cizNav();
+  if(state.sayfa==="bugun")cizBugun();
+  else if(state.sayfa==="gecmis")cizGecmis();
+  else cizProfil();
+}
+
+const ICON={
+  bugun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+  gecmis:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
+  profil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
+};
+function cizNav(){
+  const s=[["bugun","Bugün"],["gecmis","Geçmiş"],["profil","Profil"]];
+  $("#nav").innerHTML=s.map(([id,ad])=>
+    '<button data-nav="'+id+'" class="'+(state.sayfa===id?"on":"")+'">'+ICON[id]+ad+'</button>').join("");
+  $("#fab").hidden=state.sayfa!=="bugun";
+}
+
+/* ---------- kurulum ---------- */
+function cizKurulum(){
+  $("#nav").hidden=true;$("#fab").hidden=true;
+  const p=state.taslak||(state.taslak={cinsiyet:"kadin",yas:30,boy:165,kilo:68,aktivite:1,hiz:0.5,kilolar:[]});
+  const h=hedefler(p);
+  $("#top").innerHTML='<div class="top-row"><div class="brand">Makro <span>Defteri</span></div></div>';
+  $("#main").innerHTML=
+   '<h1 class="ph">Seni tanıyalım</h1>'+
+   '<p class="psub">Bu bilgilerle günlük kalori ve makro hedefini hesaplıyorum. Hepsi telefonunda kalır, sonradan değiştirebilirsin.</p>'+
+   profilFormu(p,true)+
+   '<div class="card" id="hedefKart"><h4>Şu anki hesap</h4>'+hedefKart(h)+'</div>'+
+   '<button class="btn" id="basla">Başla</button>'+
+   '<p class="foot">Hesaplama Mifflin-St Jeor formülüne dayanır. Tıbbi tavsiye değildir.</p>';
+}
+
+function profilFormu(p,taslak){
+  const pre=taslak?"t":"p";
+  return ''+
+  '<div class="card"><h4>Temel bilgiler</h4>'+
+    '<div class="pick" style="grid-template-columns:1fr 1fr">'+
+      '<button data-f="'+pre+'cinsiyet" data-v="kadin" class="'+(p.cinsiyet==="kadin"?"on":"")+'">Kadın</button>'+
+      '<button data-f="'+pre+'cinsiyet" data-v="erkek" class="'+(p.cinsiyet==="erkek"?"on":"")+'">Erkek</button>'+
+    '</div>'+
+    '<div class="rowg">'+
+      '<label class="fld"><span>Yaş</span><input class="inp" type="number" inputmode="numeric" id="'+pre+'yas" value="'+p.yas+'" min="14" max="99"></label>'+
+      '<label class="fld"><span>Boy (cm)</span><input class="inp" type="number" inputmode="numeric" id="'+pre+'boy" value="'+p.boy+'" min="120" max="230"></label>'+
+    '</div>'+
+    '<label class="fld" style="margin-bottom:0"><span>Kilo (kg)</span><input class="inp" type="number" inputmode="decimal" step="0.1" id="'+pre+'kilo" value="'+p.kilo+'" min="35" max="300"></label>'+
+  '</div>'+
+  '<div class="card"><h4>Günlük hareket</h4><div class="seg">'+
+    AKTIVITE.map((a,i)=>'<button data-f="'+pre+'aktivite" data-v="'+i+'" class="'+(p.aktivite===i?"on":"")+'"><b>'+a.k+'</b><span>'+a.a+'</span></button>').join("")+
+  '</div></div>'+
+  '<div class="card"><h4>Hedefin</h4><div class="seg">'+
+    HIZ.map(x=>'<button data-f="'+pre+'hiz" data-v="'+x.v+'" class="'+(p.hiz===x.v?"on":"")+'"><b>'+x.k+'</b><span>'+x.a+'</span></button>').join("")+
+  '</div></div>';
+}
+
+function hedefKart(h){
+  return '<div class="tgrid">'+
+    '<div class="c-k"><b>'+h.kcal+'</b><span>kcal</span></div>'+
+    '<div class="c-p"><b>'+h.protein+'</b><span>protein g</span></div>'+
+    '<div class="c-f"><b>'+h.yag+'</b><span>yağ g</span></div>'+
+    '<div class="c-c"><b>'+h.karb+'</b><span>karb g</span></div>'+
+  '</div>'+
+  '<p class="hint" style="margin:10px 0 0">Protein, kilo verirken kas kaybını azaltacak düzeyde tutuldu. Yağ hormon sağlığı için gereken en az miktarın üstünde; kalan kalori karbonhidrata ayrıldı.</p>'+
+  (h.kisitlandi?'<div class="warnbox"><b>Not:</b> Seçtiğin hız günlük '+h.taban+' kcal alt sınırının altına iniyordu. Hedefi '+h.taban+' kcal\'de tuttum; daha hızlı vermek istiyorsan hareketi artırmak daha güvenli.</div>':'');
+}
+
+function hesapIc(h){
+  return '<div class="kv"><span>Bazal metabolizma (BMR)</span><b>'+h.bmr+' kcal</b></div>'+
+    '<div class="kv"><span>Hareketle birlikte yakım</span><b>'+h.tdee+' kcal</b></div>'+
+    '<div class="kv"><span>Günlük açık</span><b>−'+h.acik+' kcal</b></div>'+
+    '<div class="kv"><span>Kalori hedefi</span><b>'+h.kcal+' kcal</b></div>';
+}
+function hedefTazele(p){
+  const h=hedefler(p);
+  const k=document.getElementById("hedefKart");
+  if(k){const b=k.querySelector("h4").outerHTML;k.innerHTML=b+hedefKart(h);}
+  const c=document.getElementById("hesapKart");
+  if(c)c.innerHTML='<h4>Hesabın nasıl çıktı</h4>'+hesapIc(h);
+}
+
+/* ---------- bugün ---------- */
+function cizBugun(){
+  const g=state.gun,h=hedefler(state.profil),t=toplam(g.ogeler);
+  const et=gunEtiket(state.tarih);
+  const ileri=state.tarih>=bugun();
+  $("#top").innerHTML=
+    '<div class="top-row"><div class="brand">Makro <span>Defteri</span></div>'+
+    '<div class="daynav">'+
+      '<button data-gun="-1" aria-label="Önceki gün"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>'+
+      '<div class="lbl">'+esc(et.b)+'<em>'+esc(et.e)+'</em></div>'+
+      '<button data-gun="1" aria-label="Sonraki gün" '+(ileri?"disabled":"")+'><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>'+
+    '</div></div>';
+
+  const kalan=h.kcal-t.kcal, oran=Math.min(t.kcal/h.kcal,1), C=2*Math.PI*52;
+  const asti=kalan<0;
+  let html=
+   '<div class="hero">'+
+    '<div class="ringwrap"><svg viewBox="0 0 120 120" aria-hidden="true">'+
+      '<circle class="ring-track" cx="60" cy="60" r="52"/>'+
+      '<circle class="ring-fill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)" style="stroke-dasharray:'+C.toFixed(1)+';stroke-dashoffset:'+(C*(1-oran)).toFixed(1)+(asti?';stroke:var(--over)':'')+'"/>'+
+    '</svg><div class="ring-c"><b class="'+(asti?"over":"")+'">'+Math.abs(r0(kalan))+'</b><small>'+(asti?"kcal aştın":"kcal kaldı")+'</small></div></div>'+
+    '<div class="macros">'+
+      makroBar("pro","Protein",t.p,h.protein)+
+      makroBar("fat","Yağ",t.f,h.yag)+
+      makroBar("carb","Karbonhidrat",t.c,h.karb)+
+    '</div>'+
+   '</div>'+
+   '<div class="tdee-note">Hedef <b>'+h.kcal+' kcal</b> · alınan <b>'+r0(t.kcal)+'</b> · günlük yakım ~<b>'+h.tdee+'</b></div>';
+
+  html+='<div class="water"><div class="wl">Su</div><div class="cnt">'+(g.su*250/1000).toFixed(2).replace(".",",")+' L</div><div class="glasses">'+
+    Array.from({length:8},(_,i)=>'<button data-su="'+(i+1)+'" class="'+(i<g.su?"on":"")+'" aria-label="'+(i+1)+'. bardak"></button>').join("")+
+    '</div></div>';
+
+  OGUNLER.forEach(o=>{
+    const list=g.ogeler.filter(x=>x.ogun===o.id),ot=toplam(list);
+    html+='<section class="meal"><div class="meal-h"><h3>'+o.ad+'</h3><span class="rng">'+o.rng+'</span>'+
+      (list.length?'<span class="tot">'+r0(ot.kcal)+' kcal</span>':'')+'</div>';
+    if(!list.length){
+      html+='<div class="empty">Henüz bir şey eklemedin</div>';
+    }else{
+      html+='<div class="items">'+list.map(x=>
+        '<div class="item"><div class="t"><b>'+esc(x.ad)+'</b><span>'+r0(x.gram)+' g · P '+r1(x.p)+' · Y '+r1(x.f)+' · K '+r1(x.c)+'</span></div>'+
+        '<div class="kc">'+r0(x.kcal)+'<em>kcal</em></div>'+
+        '<button class="del" data-sil="'+x.id+'" aria-label="Sil"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>').join("")+'</div>';
+    }
+    html+='</section>';
+  });
+
+  if(!g.ogeler.length){
+    html+='<div style="margin-top:18px"><div class="meal-h"><h3>Hızlı ekle</h3></div><div class="quick">'+
+      ["Yumurta (haşlanmış)","Beyaz peynir (tam yağlı)","Tam buğday ekmeği","Yoğurt (tam yağlı)","Tavuk göğsü (ızgara)","Mercimek çorbası","Pirinç pilavı","Elma","Çay (şekersiz)"]
+      .map(ad=>'<button class="chip" data-hizli="'+esc(ad)+'">'+esc(ad.replace(/ \(.*\)/,""))+'</button>').join("")+'</div></div>';
+  }
+  html+='<p class="foot">Değerler ortalama tahminlerdir; marka ve pişirme yöntemine göre değişir.</p>';
+  $("#main").innerHTML=html;
+  $("#main").scrollTop=0;
+}
+
+function makroBar(k,ad,alinan,hedef){
+  const y=Math.min(alinan/hedef,1)*100, dolu=alinan>hedef*1.02;
+  const kalan=hedef-alinan;
+  return '<div class="macro m-'+k+'"><div class="name">'+ad+'</div>'+
+    '<div class="num"><b>'+r0(alinan)+'</b> / '+hedef+' g'+(kalan>0?' · '+r0(kalan)+' kaldı':'')+'</div>'+
+    '<div class="bar'+(dolu?" full":"")+'"><i style="width:'+y.toFixed(1)+'%"></i></div></div>';
+}
+
+/* ---------- geçmiş ---------- */
+function cizGecmis(){
+  const h=hedefler(state.profil);
+  $("#top").innerHTML='<div class="top-row"><div class="brand">Makro <span>Defteri</span></div></div>';
+  const gunler=[];
+  for(let i=0;i<14;i++){const t=kaydir(bugun(),-i);const g=LS.get("md.gun."+t,null);gunler.push({t,g});}
+  const dolu=gunler.filter(x=>x.g&&x.g.ogeler&&x.g.ogeler.length);
+  const ort=dolu.length?r0(dolu.reduce((a,x)=>a+toplam(x.g.ogeler).kcal,0)/dolu.length):0;
+  const ortP=dolu.length?r0(dolu.reduce((a,x)=>a+toplam(x.g.ogeler).p,0)/dolu.length):0;
+
+  let html='<h1 class="ph">Geçmiş</h1><p class="psub">Son 14 gün. Tek bir günün sapması önemli değil, önemli olan haftalık ortalama.</p>';
+
+  html+='<div class="card"><h4>Kayıtlı '+dolu.length+' günün ortalaması</h4><div class="tgrid" style="grid-template-columns:1fr 1fr">'+
+    '<div class="c-k"><b>'+ort+'</b><span>kcal / gün</span></div>'+
+    '<div class="c-p"><b>'+ortP+'</b><span>protein g / gün</span></div>'+
+  '</div>'+
+  (dolu.length?'<div class="kv" style="margin-top:10px"><span>Hedefe göre</span><b>'+(ort<=h.kcal?"−":"+")+Math.abs(ort-h.kcal)+' kcal</b></div>':'')+
+  '</div>';
+
+  html+='<div class="card"><h4>Günlük kalori</h4>';
+  if(!dolu.length){
+    html+='<p class="hint" style="margin:0">Henüz kayıt yok. Bugün yediklerini eklemeye başla, birkaç gün sonra burada eğilimi göreceksin.</p>';
+  }else{
+    const maks=Math.max(h.kcal,...dolu.map(x=>toplam(x.g.ogeler).kcal))*1.05;
+    html+=gunler.map(x=>{
+      const et=gunEtiket(x.t),kc=x.g?r0(toplam(x.g.ogeler).kcal):0;
+      if(!kc)return '<div class="hrow"><div class="d">'+esc(et.b.length>7?et.b.slice(0,6):et.b)+'</div><div class="hbar"></div><div class="v"><em>—</em></div></div>';
+      return '<div class="hrow"><div class="d">'+esc(et.b.length>7?et.b.slice(0,6):et.b)+'</div>'+
+        '<div class="hbar"><i class="'+(kc<=h.kcal?"under":"")+'" style="width:'+(kc/maks*100).toFixed(1)+'%"></i></div>'+
+        '<div class="v">'+kc+' <em>/ '+h.kcal+'</em></div></div>';
+    }).join("");
+  }
+  html+='</div>';
+
+  const kl=(state.profil.kilolar||[]).slice().sort((a,b)=>a.t<b.t?-1:1);
+  html+='<div class="card"><h4>Kilo takibi</h4>'+kiloGrafik(kl)+
+    '<div class="flexrow" style="margin-top:12px"><input class="inp" type="number" inputmode="decimal" step="0.1" id="yeniKilo" placeholder="'+r1(state.profil.kilo)+'" aria-label="Bugünkü kilo"><button class="btn" id="kiloEkle">Kaydet</button></div>'+
+    '<p class="hint" style="margin:9px 0 0">Sabah, tuvaletten sonra, aç karnına tart. Günlük dalgalanma normaldir.</p></div>';
+
+  $("#main").innerHTML=html;
+}
+
+function kiloGrafik(kl){
+  if(kl.length<2)return '<p class="hint" style="margin:0">'+(kl.length?'İlk kaydın: <b>'+r1(kl[0].kg)+' kg</b>. İkinci ölçümden sonra eğilim grafiği burada çıkar.':'Henüz kilo kaydın yok. Aşağıdan ekle.')+'</p>';
+  const W=320,H=100,pad={l:30,r:8,t:10,b:18};
+  const vals=kl.map(x=>x.kg),mn=Math.min(...vals),mx=Math.max(...vals);
+  const alt=Math.floor(mn*2)/2-0.5,ust=Math.ceil(mx*2)/2+0.5,ar=ust-alt;
+  const px=i=>pad.l+(kl.length===1?0:i/(kl.length-1))*(W-pad.l-pad.r);
+  const py=v=>pad.t+(1-(v-alt)/ar)*(H-pad.t-pad.b);
+  const pts=kl.map((x,i)=>px(i).toFixed(1)+","+py(x.kg).toFixed(1)).join(" ");
+  const alan="M"+px(0).toFixed(1)+","+(H-pad.b).toFixed(1)+" L"+pts.split(" ").join(" L")+" L"+px(kl.length-1).toFixed(1)+","+(H-pad.b).toFixed(1)+" Z";
+  const ilkT=parseIso(kl[0].t),sonT=parseIso(kl[kl.length-1].t);
+  const fark=r1(kl[kl.length-1].kg-kl[0].kg);
+  return '<div class="wchart"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Kilo eğilimi grafiği">'+
+    '<line class="wg" x1="'+pad.l+'" y1="'+py(ust)+'" x2="'+(W-pad.r)+'" y2="'+py(ust)+'"/>'+
+    '<line class="wg" x1="'+pad.l+'" y1="'+py(alt)+'" x2="'+(W-pad.r)+'" y2="'+py(alt)+'"/>'+
+    '<text class="wlab" x="0" y="'+(py(ust)+3)+'">'+r1(ust)+'</text>'+
+    '<text class="wlab" x="0" y="'+(py(alt)+3)+'">'+r1(alt)+'</text>'+
+    '<path class="warea" d="'+alan+'"/>'+
+    '<polyline class="wline" points="'+pts+'"/>'+
+    '<circle class="wdot" cx="'+px(kl.length-1).toFixed(1)+'" cy="'+py(kl[kl.length-1].kg).toFixed(1)+'" r="4"/>'+
+    '<text class="wlab" x="'+pad.l+'" y="'+(H-4)+'">'+ilkT.getDate()+" "+AYLAR[ilkT.getMonth()].slice(0,3)+'</text>'+
+    '<text class="wlab" x="'+(W-pad.r)+'" y="'+(H-4)+'" text-anchor="end">'+sonT.getDate()+" "+AYLAR[sonT.getMonth()].slice(0,3)+'</text>'+
+  '</svg></div>'+
+  '<div class="kv"><span>Toplam değişim</span><b style="color:'+(fark<=0?"var(--ok)":"var(--fat)")+'">'+(fark>0?"+":"")+String(fark).replace(".",",")+' kg</b></div>'+
+  '<div class="kv"><span>Son ölçüm</span><b>'+String(r1(kl[kl.length-1].kg)).replace(".",",")+' kg</b></div>';
+}
+
+/* ---------- profil ---------- */
+function cizProfil(){
+  const p=state.profil,h=hedefler(p);
+  $("#top").innerHTML='<div class="top-row"><div class="brand">Makro <span>Defteri</span></div></div>';
+  $("#main").innerHTML=
+   '<h1 class="ph">Profil</h1><p class="psub">Kilon değiştikçe buradan güncelle — hedefler otomatik yeniden hesaplanır.</p>'+
+   '<div class="card" id="hedefKart"><h4>Günlük hedefin</h4>'+hedefKart(h)+'</div>'+
+   '<div class="card" id="hesapKart"><h4>Hesabın nasıl çıktı</h4>'+hesapIc(h)+'</div>'+
+   profilFormu(p,false)+
+   '<button class="btn ghost" id="sifirla" style="margin-top:4px">Tüm verileri sıfırla</button>'+
+   '<p class="foot">Veriler telefonunda saklanır'+(DB?" ve hesabınla senkronlanır":"")+'.<br>Makro Defteri · Mifflin-St Jeor · tıbbi tavsiye değildir.</p>';
+}
+
+/* ======================= sheet (ekle) ======================= */
+const sheet={acik:false,sekme:"ara",arama:"",secili:null,gram:0,ogun:"ara",ai:[],aiYuk:false,aiHata:"",serbest:"",foto:null};
+function sheetAc(){
+  sheet.acik=true;sheet.sekme="ara";sheet.arama="";sheet.secili=null;sheet.ai=[];sheet.aiHata="";sheet.serbest="";sheet.foto=null;
+  sheet.ogun=varsayilanOgun();
+  cizSheet();
+  $("#veil").classList.add("on");$("#sheet").classList.add("on");
+  setTimeout(()=>{const el=$("#q");if(el)el.focus();},260);
+}
+function sheetKapat(){
+  sheet.acik=false;
+  $("#veil").classList.remove("on");$("#sheet").classList.remove("on");
+}
+function cizSheet(){
+  const sekmeler=[["ara","Ara"]];
+  if(SAMPLE)sekmeler.push(["yaz","Yaz"]);
+  if(SAMPLE&&SAMPLE_IMG)sekmeler.push(["foto","Fotoğraf"]);
+  sekmeler.push(["elle","Elle"]);
+  $("#sheetH").innerHTML='<div class="grab"></div><div class="sheet-t"><h2>Ne yedin?</h2>'+
+    '<button class="x" id="sheetX" aria-label="Kapat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'+
+    '<div class="tabs">'+sekmeler.map(([id,ad])=>'<button data-sek="'+id+'" class="'+(sheet.sekme===id?"on":"")+'">'+ad+'</button>').join("")+'</div>';
+  let b="";
+  if(sheet.secili)b=cizPorsiyon();
+  else if(sheet.sekme==="ara")b=cizAra();
+  else if(sheet.sekme==="yaz")b=cizYaz();
+  else if(sheet.sekme==="foto")b=cizFoto();
+  else b=cizElle();
+  $("#sheetB").innerHTML=b;
+}
+function ogunSec(){
+  return '<div class="fld"><span>Hangi öğün</span><div class="pick" style="margin-bottom:0">'+
+    OGUNLER.map(o=>'<button data-ogun="'+o.id+'" class="'+(sheet.ogun===o.id?"on":"")+'">'+o.ad+'</button>').join("")+'</div></div>';
+}
+function cizAra(){
+  const q=norm(sheet.arama.trim());
+  let liste;
+  if(!q)liste=FOODS.slice(0,12);
+  else{
+    const s=FOODS.map(f=>{const n=norm(f[0]);let p=-1;
+      if(n.startsWith(q))p=0;else if(n.includes(" "+q))p=1;else if(n.includes(q))p=2;
+      return p<0?null:{f,p};}).filter(Boolean).sort((a,b)=>a.p-b.p||a.f[0].length-b.f[0].length);
+    liste=s.slice(0,30).map(x=>x.f);
+  }
+  return '<label class="fld"><span>Yemek ara</span><input class="inp" id="q" type="search" autocomplete="off" placeholder="mercimek çorbası, yumurta, simit…" value="'+esc(sheet.arama)+'"></label>'+
+    (liste.length?'<div class="res">'+liste.map(f=>{
+      const kc=r0(f[1]*f[5]/100);
+      return '<button data-yemek="'+esc(f[0])+'"><div class="t"><b>'+esc(f[0])+'</b><span>'+esc(f[6])+' · '+f[5]+' g</span></div><div class="k">'+kc+'</div></button>';
+    }).join("")+'</div>'
+    :'<div class="nores">"'+esc(sheet.arama)+'" listede yok.<br>'+(SAMPLE?'<b>Yaz</b> sekmesinden tarif ederek ekleyebilirsin.':'<b>Elle</b> sekmesinden değerleri girebilirsin.')+'</div>');
+}
+function cizPorsiyon(){
+  const f=sheet.secili,g=sheet.gram;
+  const kc=f[1]*g/100,p=f[2]*g/100,y=f[3]*g/100,k=f[4]*g/100;
+  const katlar=[0.5,1,1.5,2];
+  return '<div class="prev"><div class="pn">'+esc(f[0])+'</div><div class="pg">'+
+      '<div class="c-k"><b>'+r0(kc)+'</b><span>kcal</span></div>'+
+      '<div class="c-p"><b>'+r1(p)+'</b><span>protein</span></div>'+
+      '<div class="c-f"><b>'+r1(y)+'</b><span>yağ</span></div>'+
+      '<div class="c-c"><b>'+r1(k)+'</b><span>karb</span></div>'+
+    '</div></div>'+
+    '<div class="fld"><span>Porsiyon — '+esc(f[6])+' ≈ '+f[5]+' g</span><div class="pick" style="margin-bottom:0">'+
+      katlar.map(x=>'<button data-kat="'+x+'" class="'+(Math.abs(g-f[5]*x)<0.5?"on":"")+'">'+String(x).replace(".",",")+'x</button>').join("")+
+    '</div></div>'+
+    '<label class="fld"><span>Miktar (gram)</span><input class="inp" id="gram" type="number" inputmode="numeric" value="'+r0(g)+'" min="1" max="3000"></label>'+
+    ogunSec()+
+    '<button class="btn" id="ekleBtn">Deftere ekle</button>'+
+    '<button class="btn ghost" id="geriBtn" style="margin-top:8px">Geri</button>';
+}
+function cizYaz(){
+  if(sheet.aiYuk)return yukleniyor("Claude öğününü çözümlüyor…","Bu 10-30 saniye sürebilir.");
+  if(sheet.ai.length)return aiSonuc();
+  return '<p class="hint">Ne yediğini normal cümlelerle yaz — Claude porsiyonları ve makroları tahmin etsin.</p>'+
+    (sheet.aiHata?'<div class="err">'+esc(sheet.aiHata)+'</div>':'')+
+    '<label class="fld"><span>Öğünün</span><textarea class="inp" id="serbest" placeholder="2 dilim tam buğday ekmeği, 1 haşlanmış yumurta, biraz beyaz peynir ve 5-6 zeytin">'+esc(sheet.serbest)+'</textarea></label>'+
+    ogunSec()+
+    '<button class="btn" id="aiBtn">Hesapla</button>';
+}
+function cizFoto(){
+  if(sheet.aiYuk)return yukleniyor("Claude tabağına bakıyor…","Bu 15-40 saniye sürebilir.");
+  if(sheet.ai.length)return aiSonuc();
+  return '<p class="hint">Tabağının fotoğrafını çek; Claude içindekileri ve tahmini porsiyonları çıkarsın. Yanında bir çatal ya da bardak varsa tahmin daha isabetli olur.</p>'+
+    (sheet.aiHata?'<div class="err">'+esc(sheet.aiHata)+'</div>':'')+
+    '<label class="fld"><span>Fotoğraf</span><input class="inp" id="fotoInp" type="file" accept="image/*" capture="environment"></label>'+
+    (sheet.foto?'<div class="prev"><div class="pn" style="margin:0;font-size:13.5px;font-weight:500">'+esc(sheet.foto.name||"Fotoğraf seçildi")+'</div></div>':'')+
+    ogunSec()+
+    '<button class="btn" id="fotoBtn" '+(sheet.foto?"":"disabled")+'>Çözümle</button>';
+}
+function yukleniyor(b,a){
+  return '<div style="text-align:center;padding:36px 10px">'+
+    '<div style="width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 14px"></div>'+
+    '<div style="font-size:14.5px;font-weight:600">'+esc(b)+'</div>'+
+    '<div style="font-size:12.5px;color:var(--muted);margin-top:5px">'+esc(a)+'</div></div>';
+}
+function aiSonuc(){
+  const sec=sheet.ai.filter(x=>x.on);
+  const t=sec.reduce((a,x)=>({k:a.k+x.kcal,p:a.p+x.protein,f:a.f+x.yag,c:a.c+x.karb}),{k:0,p:0,f:0,c:0});
+  return '<div class="prev"><div class="pn" style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">Seçilenlerin toplamı</div><div class="pg">'+
+      '<div class="c-k"><b>'+r0(t.k)+'</b><span>kcal</span></div>'+
+      '<div class="c-p"><b>'+r1(t.p)+'</b><span>protein</span></div>'+
+      '<div class="c-f"><b>'+r1(t.f)+'</b><span>yağ</span></div>'+
+      '<div class="c-c"><b>'+r1(t.c)+'</b><span>karb</span></div>'+
+    '</div></div>'+
+    sheet.ai.map((x,i)=>'<label class="aitem"><input type="checkbox" data-ai="'+i+'" '+(x.on?"checked":"")+'>'+
+      '<div class="t"><b>'+esc(x.ad)+'</b><span>'+r0(x.gram)+' g · P '+r1(x.protein)+' · Y '+r1(x.yag)+' · K '+r1(x.karb)+'</span></div>'+
+      '<div class="k">'+r0(x.kcal)+'</div></label>').join("")+
+    '<p class="hint" style="margin-top:12px">Bunlar tahmindir. Yanlış görünen bir şey varsa işaretini kaldır, sonra <b>Elle</b> sekmesinden düzelt.</p>'+
+    ogunSec()+
+    '<button class="btn" id="aiEkle" '+(sec.length?"":"disabled")+'>'+sec.length+' öğeyi ekle</button>'+
+    '<button class="btn ghost" id="aiGeri" style="margin-top:8px">Baştan</button>';
+}
+function cizElle(){
+  return '<p class="hint">Paketin üzerindeki değerleri yaz. Kalori boş bırakılırsa makrolardan hesaplanır.</p>'+
+    '<label class="fld"><span>Ne yedin</span><input class="inp" id="eAd" placeholder="Örn. Marka X protein kurabiye"></label>'+
+    '<div class="rowg"><label class="fld"><span>Miktar (g)</span><input class="inp" id="eGram" type="number" inputmode="numeric" value="100"></label>'+
+    '<label class="fld"><span>Kalori</span><input class="inp" id="eKcal" type="number" inputmode="numeric" placeholder="kcal"></label></div>'+
+    '<div class="rowg" style="grid-template-columns:repeat(3,1fr)">'+
+      '<label class="fld"><span>Protein</span><input class="inp" id="eP" type="number" inputmode="decimal" step="0.1" value="0"></label>'+
+      '<label class="fld"><span>Yağ</span><input class="inp" id="eF" type="number" inputmode="decimal" step="0.1" value="0"></label>'+
+      '<label class="fld"><span>Karb</span><input class="inp" id="eC" type="number" inputmode="decimal" step="0.1" value="0"></label>'+
+    '</div>'+
+    '<p class="hint" style="margin-top:-2px">Girdiğin değerler toplam miktar için — 100 g için değil.</p>'+
+    ogunSec()+
+    '<button class="btn" id="elleBtn">Deftere ekle</button>';
+}
+
+/* ======================= ekleme ======================= */
+function ogeEkle(o){
+  state.gun.ogeler.push(Object.assign({id:Math.random().toString(36).slice(2,10)},o));
+  gunKaydet(state.gun);
+  if(state.sayfa!=="bugun"){state.sayfa="bugun";cizNav();}
+  cizBugun();
+}
+const PROMPT_KURAL='Sen Türk mutfağını iyi bilen bir beslenme uzmanısın. Türkiye\'deki standart porsiyonları baz al: 1 dilim ekmek ~25 g, 1 çay bardağı ~100 ml, 1 su bardağı ~200 ml, 1 yemek kaşığı ~15 g, 1 tatlı kaşığı ~7 g, 1 kase çorba ~250 g, 1 porsiyon pilav ~150 g, 1 dilim beyaz peynir ~30 g, 1 orta boy meyve ~150 g.\nSADECE şu biçimde bir JSON dizisi döndür, öncesinde ve sonrasında hiçbir açıklama yazma:\n[{"ad":"yiyecek adı","gram":sayı,"kcal":sayı,"protein":sayı,"yag":sayı,"karb":sayı}]\nÖnemli: kcal, protein, yag ve karb değerleri o öğenin BELİRTTİĞİN GRAM MİKTARININ TAMAMI için olsun, 100 gram için değil. Her yiyeceği ayrı bir nesne yap. Sayıları rakam olarak yaz.\nDeğerleri TürKomp ve USDA gibi standart besin tablolarına dayandır; uydurma. Kalori ile makrolar tutarlı olsun: kcal, protein*4 + yag*9 + karb*4 sonucuna yakın çıkmalı. Ev yemeklerinde kullanılan yağı da hesaba kat. Emin olmadığında ortalama bir ev porsiyonunu esas al.';
+
+async function aiCagir(mesaj,blob){
+  sheet.aiYuk=true;sheet.aiHata="";cizSheet();
+  try{
+    const opts={modelTier:"default"};
+    if(blob)opts.images=blob;
+    const veri=await SAMPLE.json(mesaj,opts);
+    const liste=(Array.isArray(veri)?veri:(veri&&Array.isArray(veri.ogeler)?veri.ogeler:[]))
+      .map(x=>({ad:String(x.ad||x.isim||"Bilinmeyen"),gram:Number(x.gram)||0,kcal:Number(x.kcal)||0,
+                protein:Number(x.protein)||0,yag:Number(x.yag)||0,karb:Number(x.karb)||0,on:true}))
+      .filter(x=>x.kcal>0||x.protein>0||x.yag>0||x.karb>0);
+    if(!liste.length)throw{code:"bos"};
+    sheet.ai=liste;sheet.aiYuk=false;cizSheet();
+  }catch(e){
+    sheet.aiYuk=false;
+    const c=e&&e.code;
+    sheet.aiHata=
+      c==="not_granted"?"Claude'a sorma izni verilmedi. Sayfayı yenileyip tekrar deneyebilir, ya da Elle sekmesinden girebilirsin."
+      :c==="rate_limited"?"Çok sık istek gönderildi. Bir dakika bekleyip tekrar dene."
+      :c==="images_unavailable"?"Bu görünümde fotoğraf gönderilemiyor. Yaz sekmesini kullan."
+      :c==="image_rejected"?"Fotoğraf okunamadı. Daha küçük bir JPEG veya PNG dene."
+      :c==="bos"?"Yazdığından yiyecek çıkaramadım. Daha açık yaz, örneğin “1 kase mercimek çorbası ve 2 dilim ekmek”."
+      :"Bağlanamadım. Tekrar dene ya da Elle sekmesinden gir.";
+    cizSheet();
+  }
+}
+
+/* ======================= olaylar ======================= */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button,label.aitem");
+  if(!t)return;
+
+  /* --- kurulum/profil seçimleri --- */
+  const f=t.dataset.f;
+  if(f){
+    const taslak=f[0]==="t",anahtar=f.slice(1),v=t.dataset.v;
+    const hedef=taslak?state.taslak:state.profil;
+    okuForm(hedef,taslak?"t":"p");
+    hedef[anahtar]=(anahtar==="cinsiyet")?v:Number(v);
+    if(taslak)cizKurulum();else{profilKaydet(state.profil);cizProfil();}
+    return;
+  }
+  if(t.id==="basla"){
+    const p=state.taslak;okuForm(p,"t");
+    p.kilolar=[{t:bugun(),kg:p.kilo}];
+    profilKaydet(p);state.taslak=null;state.sayfa="bugun";ciz();return;
+  }
+  if(t.id==="sifirla"){
+    if(confirm("Tüm profil ve yemek kayıtların silinecek. Emin misin?")){
+      Object.keys(localStorage).filter(k=>k.indexOf("md.")===0).forEach(k=>localStorage.removeItem(k));
+      state.profil=null;state.gun=bosGun(state.tarih);state.taslak=null;ciz();
+    }return;
+  }
+  if(t.id==="kiloEkle"){
+    const v=parseFloat(($("#yeniKilo").value||"").replace(",","."));
+    if(!(v>20&&v<400)){$("#yeniKilo").focus();return;}
+    const p=state.profil;p.kilolar=(p.kilolar||[]).filter(x=>x.t!==bugun());
+    p.kilolar.push({t:bugun(),kg:v});p.kilo=v;profilKaydet(p);cizGecmis();return;
+  }
+
+  /* --- gezinme --- */
+  if(t.dataset.nav){state.sayfa=t.dataset.nav;ciz();return;}
+  if(t.dataset.gun){
+    const n=Number(t.dataset.gun),y=kaydir(state.tarih,n);
+    if(n>0&&y>bugun())return;
+    state.tarih=y;state.gun=gunYukle(y);cizBugun();return;
+  }
+  if(t.dataset.su!=null){
+    const n=Number(t.dataset.su);
+    state.gun.su=(state.gun.su===n)?n-1:n;gunKaydet(state.gun);cizBugun();return;
+  }
+  if(t.dataset.sil){
+    state.gun.ogeler=state.gun.ogeler.filter(x=>x.id!==t.dataset.sil);
+    gunKaydet(state.gun);cizBugun();return;
+  }
+  if(t.dataset.hizli){
+    const y=FOODS.find(x=>x[0]===t.dataset.hizli);
+    if(y){sheetAc();sheet.secili=y;sheet.gram=y[5];cizSheet();}
+    return;
+  }
+
+  /* --- sheet --- */
+  if(t.id==="fab"){sheetAc();return;}
+  if(t.id==="sheetX"){sheetKapat();return;}
+  if(t.dataset.sek){sheet.sekme=t.dataset.sek;sheet.secili=null;sheet.ai=[];sheet.aiHata="";cizSheet();return;}
+  if(t.dataset.ogun){sheet.ogun=t.dataset.ogun;cizSheet();return;}
+  if(t.dataset.yemek){
+    const y=FOODS.find(x=>x[0]===t.dataset.yemek);
+    if(y){sheet.secili=y;sheet.gram=y[5];cizSheet();}return;
+  }
+  if(t.dataset.kat){sheet.gram=sheet.secili[5]*Number(t.dataset.kat);cizSheet();return;}
+  if(t.id==="geriBtn"){sheet.secili=null;cizSheet();return;}
+  if(t.id==="ekleBtn"){
+    const f2=sheet.secili,g=Math.max(1,Number($("#gram").value)||f2[5]);
+    ogeEkle({ad:f2[0],gram:g,kcal:f2[1]*g/100,p:f2[2]*g/100,f:f2[3]*g/100,c:f2[4]*g/100,ogun:sheet.ogun});
+    sheetKapat();return;
+  }
+  if(t.id==="elleBtn"){
+    const ad=($("#eAd").value||"").trim()||"Kendi kaydım";
+    const g=Number($("#eGram").value)||100;
+    const p=Number($("#eP").value)||0,y=Number($("#eF").value)||0,c=Number($("#eC").value)||0;
+    const kcal=Number($("#eKcal").value)||r0(p*4+y*9+c*4);
+    if(!kcal&&!p&&!y&&!c){$("#eKcal").focus();return;}
+    ogeEkle({ad,gram:g,kcal,p,f:y,c,ogun:sheet.ogun});sheetKapat();return;
+  }
+  if(t.id==="aiBtn"){
+    const s=($("#serbest").value||"").trim();
+    if(!s){$("#serbest").focus();return;}
+    sheet.serbest=s;
+    aiCagir(PROMPT_KURAL+"\n\nKullanıcının yediği: \""+s+"\"");
+    return;
+  }
+  if(t.id==="fotoBtn"&&sheet.foto){
+    aiCagir(PROMPT_KURAL+"\n\nEkteki fotoğrafta bir öğün var. Tabaktaki her yiyeceği ayrı ayrı belirle ve porsiyonlarını tahmin et.",sheet.foto);
+    return;
+  }
+  if(t.id==="aiGeri"){sheet.ai=[];sheet.foto=null;cizSheet();return;}
+  if(t.id==="aiEkle"){
+    sheet.ai.filter(x=>x.on).forEach(x=>{
+      state.gun.ogeler.push({id:Math.random().toString(36).slice(2,10),ad:x.ad,gram:x.gram,kcal:x.kcal,p:x.protein,f:x.yag,c:x.karb,ogun:sheet.ogun});
+    });
+    gunKaydet(state.gun);sheetKapat();
+    if(state.sayfa!=="bugun"){state.sayfa="bugun";cizNav();}
+    cizBugun();return;
+  }
+});
+
+document.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.dataset&&el.dataset.ai!=null){
+    sheet.ai[Number(el.dataset.ai)].on=el.checked;cizSheet();return;
+  }
+  if(el.id==="fotoInp"){
+    sheet.foto=el.files&&el.files[0]?el.files[0]:null;cizSheet();return;
+  }
+});
+
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.id==="q"){
+    sheet.arama=el.value;
+    const kon=el.selectionStart;
+    const b=$("#sheetB");b.innerHTML=cizAra();
+    const y=$("#q");if(y){y.focus();try{y.setSelectionRange(kon,kon);}catch(_){}}
+    return;
+  }
+  if(el.id==="gram"){
+    const g=Number(el.value)||0;if(g<=0)return;
+    sheet.gram=g;
+    const f=sheet.secili,kc=f[1]*g/100;
+    const pg=document.querySelector(".prev .pg");
+    if(pg)pg.innerHTML='<div class="c-k"><b>'+r0(kc)+'</b><span>kcal</span></div>'+
+      '<div class="c-p"><b>'+r1(f[2]*g/100)+'</b><span>protein</span></div>'+
+      '<div class="c-f"><b>'+r1(f[3]*g/100)+'</b><span>yağ</span></div>'+
+      '<div class="c-c"><b>'+r1(f[4]*g/100)+'</b><span>karb</span></div>';
+    document.querySelectorAll("[data-kat]").forEach(b=>
+      b.classList.toggle("on",Math.abs(g-f[5]*Number(b.dataset.kat))<0.5));
+    return;
+  }
+  if(el.id==="serbest"){sheet.serbest=el.value;return;}
+
+});
+
+document.addEventListener("blur",e=>{
+  const el=e.target;
+  if(!el.id)return;
+  if(["pyas","pboy","pkilo"].indexOf(el.id)>=0){
+    okuForm(state.profil,"p");profilKaydet(state.profil);hedefTazele(state.profil);
+  }else if(["tyas","tboy","tkilo"].indexOf(el.id)>=0){
+    okuForm(state.taslak,"t");hedefTazele(state.taslak);
+  }
+},true);
+
+function okuForm(p,pre){
+  const g=id=>{const el=document.getElementById(pre+id);return el?el.value:null;};
+  const yas=Number(g("yas")),boy=Number(g("boy")),kilo=parseFloat(String(g("kilo")||"").replace(",","."));
+  if(yas>=14&&yas<=99)p.yas=yas;
+  if(boy>=120&&boy<=230)p.boy=boy;
+  if(kilo>=35&&kilo<=300)p.kilo=kilo;
+}
+
+$("#veil").addEventListener("click",sheetKapat);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheet.acik)sheetKapat();});
+
+/* ======================= ana ekrana ekleme (PWA) ======================= */
+(function pwa(){
+  const h=document.head;
+  const m=(n,c)=>{if(document.querySelector('meta[name="'+n+'"]'))return;const el=document.createElement("meta");el.setAttribute("name",n);el.setAttribute("content",c);h.appendChild(el);};
+  m("apple-mobile-web-app-capable","yes");
+  m("mobile-web-app-capable","yes");
+  m("apple-mobile-web-app-title","Makro");
+  m("apple-mobile-web-app-status-bar-style","default");
+  const koyu=matchMedia("(prefers-color-scheme: dark)").matches;
+  m("theme-color",koyu?"#121512":"#F1F3ED");
+  try{
+    const c=document.createElement("canvas");c.width=c.height=180;
+    const x=c.getContext("2d");
+    x.fillStyle="#F1F3ED";x.fillRect(0,0,180,180);
+    x.strokeStyle="#C8452B";x.lineWidth=13;x.lineCap="round";
+    x.beginPath();x.arc(90,90,58,-Math.PI/2,Math.PI*0.95);x.stroke();
+    x.fillStyle="#151A17";x.font="700 62px 'Bricolage Grotesque',sans-serif";
+    x.textAlign="center";x.textBaseline="middle";x.fillText("M",90,94);
+    if(document.querySelector('link[rel="apple-touch-icon"]'))return;
+    const l=document.createElement("link");
+    l.rel="apple-touch-icon";l.href=c.toDataURL("image/png");h.appendChild(l);
+  }catch(e){}
+})();
+
+/* ======================= başlat ======================= */
+state.profil=LS.get("md.profil",null);
+if(state.profil&&!state.profil.kilolar)state.profil.kilolar=[];
+state.gun=gunYukle(state.tarih);
+ciz();
+baglan();
+</script>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});</script>
+</body>
+</html>
